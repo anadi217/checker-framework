@@ -104,7 +104,7 @@ use the last one.
    run checker.jar via \<java> (not \<javac>) as in:
 
 \begin{Verbatim}
-  java -jar $CHECKERFRAMEWORK/checker/dist/checker.jar ...
+  java -jar "$CHECKERFRAMEWORK/checker/dist/checker.jar" ...
 \end{Verbatim}
 
     You can simplify the above command by introducing an alias.  Then,
@@ -114,11 +114,11 @@ use the last one.
 \begin{Verbatim}
   # Unix
   export CHECKERFRAMEWORK=${HOME}/checker-framework-2.1.9
-  alias javacheck='java -jar $CHECKERFRAMEWORK/checker/dist/checker.jar'
+  alias javacheck='java -jar "$CHECKERFRAMEWORK/checker/dist/checker.jar"'
 
   # Windows
   set CHECKERFRAMEWORK = C:\Program Files\checker-framework-2.1.9\
-  doskey javacheck=java -jar %CHECKERFRAMEWORK%\checker\dist\checker.jar $*
+  doskey javacheck=java -jar "%CHECKERFRAMEWORK%\checker\dist\checker.jar" $*
 \end{Verbatim}
 
    \noindent
@@ -812,7 +812,7 @@ You can download it from \myurl{https://sourceforge.net/projects/tide/}.
 
 \section{NetBeans\label{netbeans}}
 
-There are two approaches to running a checker in Netbeans:  via modifying the project properties, or via a custom ant target.
+There are two approaches to running a checker in NetBeans:  via modifying the project properties, or via a custom ant target.
 
 
 \subsection{Adding a checker via the project properties\label{netbeans-project-properties}}
@@ -1053,8 +1053,9 @@ inside the body of a method.
 % LocalWords:  compilerArgs Xbootclasspath JSR308 jsr308 jsr308javac mvn
 %  LocalWords:  plugins proc procOnly DirectoryScanner setIncludes groupId
 %  LocalWords:  setExcludes checkerFrameworkVersion javacParams javaParams
-%%  LocalWords:  artifactId quals failOnError ejc CHECKERFRAMEWORK
-%%  LocalWords:  javacheck checkerframework MavenExample org arg
+%%  LocalWords:  artifactId quals failOnError ejc CHECKERFRAMEWORK env
+%%  LocalWords:  javacheck checkerframework MavenExample org arg typecheck
 %%  LocalWords:  AoutputArgsToFile qual jdk7 jdk8 annotatedJdk Unhandled
-%%  LocalWords:  annotationProcessors annotationProcessor JavaCompile
+%%  LocalWords:  annotationProcessors annotationProcessor JavaCompile Ctrl
 %%  LocalWords:  typeAnnotationsJavac targetJavaVersion GradleExamples
+%%  LocalWords:  systemPath artifactID MacOS

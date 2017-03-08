@@ -21,11 +21,12 @@ import org.checkerframework.framework.util.FlowExpressionParseUtil;
 import org.checkerframework.javacutil.AnnotationUtils;
 
 /**
- * The transfer function for the SameLen checker. Contains two cases:
+ * The transfer function for the SameLen checker. Contains three cases:
  *
  * <ol>
  *   <li>"b = new T[a.length]" implies that b is the same length as a.
  *   <li>after "if (a.length == b.length)", a and b have the same length.
+ *   <li>after "if (a == b)", a and b have the same length, if they are arrays.
  * </ol>
  */
 public class SameLenTransfer extends CFTransfer {
@@ -92,23 +93,15 @@ public class SameLenTransfer extends CFTransfer {
         Receiver exprRec =
                 FlowExpressions.internalReprOf(analysis.getTypeFactory(), node.getExpression());
 
-        if (node.getTarget().getType().getKind() == TypeKind.ARRAY) {
+        if (node.getTarget().getType().getKind() == TypeKind.ARRAY
+                || (rightAnno != null
+                        && AnnotationUtils.areSameByClass(rightAnno, SameLen.class))) {
 
             AnnotationMirror rightAnnoOrUnknown = rightAnno == null ? UNKNOWN : rightAnno;
 
             AnnotationMirror combinedSameLen =
                     aTypeFactory.createCombinedSameLen(
                             targetRec, exprRec, UNKNOWN, rightAnnoOrUnknown);
-
-            propagateCombinedSameLen(combinedSameLen, node, result.getRegularStore());
-        }
-
-        // If the right side of the assignment has a SameLen type, propogate the right side to the arrays listed there.
-
-        if (rightAnno != null && AnnotationUtils.areSameByClass(rightAnno, SameLen.class)) {
-
-            AnnotationMirror combinedSameLen =
-                    aTypeFactory.createCombinedSameLen(targetRec, exprRec, UNKNOWN, rightAnno);
 
             propagateCombinedSameLen(combinedSameLen, node, result.getRegularStore());
         }
@@ -127,22 +120,19 @@ public class SameLenTransfer extends CFTransfer {
      */
     private void propagateCombinedSameLen(
             AnnotationMirror combinedSameLen, Node node, CFStore store) {
+        TreePath currentPath = aTypeFactory.getPath(node.getTree());
+        if (currentPath == null) {
+            return;
+        }
         for (String s : SameLenUtils.getValue(combinedSameLen)) {
             Receiver recS;
             try {
-                TreePath currentPath = aTypeFactory.getPath(node.getTree());
-                if (currentPath != null) {
-                    recS = aTypeFactory.getReceiverFromJavaExpressionString(s, currentPath);
-                } else {
-                    return;
-                }
+                recS = aTypeFactory.getReceiverFromJavaExpressionString(s, currentPath);
             } catch (FlowExpressionParseUtil.FlowExpressionParseException e) {
-                recS = null;
+                continue;
             }
-            if (recS != null) {
-                store.clearValue(recS);
-                store.insertValue(recS, combinedSameLen);
-            }
+            store.clearValue(recS);
+            store.insertValue(recS, combinedSameLen);
         }
     }
 
@@ -157,25 +147,15 @@ public class SameLenTransfer extends CFTransfer {
      * and b have SameLen of each other in the store.
      */
     private void refineEq(Node left, Node right, CFStore store) {
-        // Look for "a.length == b.length".
-        if (isArrayLengthAccess(left) && isArrayLengthAccess(right)) {
+        Receiver leftRec = FlowExpressions.internalReprOf(analysis.getTypeFactory(), left);
+        Receiver rightRec = FlowExpressions.internalReprOf(analysis.getTypeFactory(), right);
 
-            Node leftReceiverNode = ((FieldAccessNode) left).getReceiver();
-            Node rightReceiverNode = ((FieldAccessNode) right).getReceiver();
+        AnnotationMirror leftAnno = getAnno(left);
+        AnnotationMirror rightAnno = getAnno(right);
+        AnnotationMirror combinedSameLen =
+                aTypeFactory.createCombinedSameLen(leftRec, rightRec, leftAnno, rightAnno);
 
-            Receiver leftRec =
-                    FlowExpressions.internalReprOf(analysis.getTypeFactory(), leftReceiverNode);
-            Receiver rightRec =
-                    FlowExpressions.internalReprOf(analysis.getTypeFactory(), rightReceiverNode);
-
-            AnnotationMirror leftReceiverAnno = getAnno(leftReceiverNode);
-            AnnotationMirror rightReceiverAnno = getAnno(rightReceiverNode);
-            AnnotationMirror combinedSameLen =
-                    aTypeFactory.createCombinedSameLen(
-                            leftRec, rightRec, leftReceiverAnno, rightReceiverAnno);
-
-            propagateCombinedSameLen(combinedSameLen, left, store);
-        }
+        propagateCombinedSameLen(combinedSameLen, left, store);
     }
 
     /** Return n's annotation from the SameLen hierarchy. */
@@ -199,14 +179,18 @@ public class SameLenTransfer extends CFTransfer {
             CFValue firstValue,
             CFValue secondValue,
             boolean notEqualTo) {
-
-        if (notEqualTo) {
-            // Refinement in the else store if this is a.length != b.length.
-            refineEq(firstNode, secondNode, result.getElseStore());
-        } else {
-            // Refinement in the then store if this is a.length == b.length.
-            refineEq(firstNode, secondNode, result.getThenStore());
+        CFStore equalStore = notEqualTo ? result.getElseStore() : result.getThenStore();
+        if (isArrayLengthAccess(firstNode) && isArrayLengthAccess(secondNode)) {
+            // Refinement in the else store if this is a.length == b.length.
+            refineEq(
+                    ((FieldAccessNode) firstNode).getReceiver(),
+                    ((FieldAccessNode) secondNode).getReceiver(),
+                    equalStore);
+        } else if (firstNode.getType().getKind() == TypeKind.ARRAY
+                || secondNode.getType().getKind() == TypeKind.ARRAY) {
+            refineEq(firstNode, secondNode, equalStore);
         }
+
         return new ConditionalTransferResult<>(
                 result.getResultValue(), result.getThenStore(), result.getElseStore());
     }

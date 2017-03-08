@@ -1,23 +1,9 @@
 import org.checkerframework.checker.index.qual.*;
 import org.checkerframework.dataflow.qual.Pure;
 
-class SameLenManyArrays {
-    void transfer1(int @SameLen("#2") [] a, int[] b) {
-        int[] c = new int[a.length];
-        for (int i = 0; i < c.length; i++) { // i's type is @LTL("c")
-            b[i] = 1;
-            int @SameLen({"a", "b", "c"}) [] d = c;
-        }
-    }
-
-    void transfer2(int @SameLen("#2") [] a, int[] b) {
-        for (int i = 0; i < b.length; i++) { // i's type is @LTL("b")
-            a[i] = 1;
-        }
-    }
-
+class SameLenEqualsRefinement {
     void transfer3(int @SameLen("#2") [] a, int[] b, int[] c) {
-        if (a.length == c.length) {
+        if (a == c) {
             for (int i = 0; i < c.length; i++) { // i's type is @LTL("c")
                 b[i] = 1;
                 int @SameLen({"a", "b", "c"}) [] d = c;
@@ -26,8 +12,8 @@ class SameLenManyArrays {
     }
 
     void transfer4(int[] a, int[] b, int[] c) {
-        if (b.length == c.length) {
-            if (a.length == b.length) {
+        if (b == c) {
+            if (a == b) {
                 for (int i = 0; i < c.length; i++) { // i's type is @LTL("c")
                     a[i] = 1;
                     int @SameLen({"a", "b", "c"}) [] d = c;
@@ -37,7 +23,7 @@ class SameLenManyArrays {
     }
 
     void transfer5(int[] a, int[] b, int[] c, int[] d) {
-        if (a.length == b.length && b.length == c.length) {
+        if (a == b && b == c) {
             int[] x = a;
             int[] y = x;
             int index = x.length - 1;
