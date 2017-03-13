@@ -22,8 +22,8 @@ import javax.lang.model.element.AnnotationMirror;
 import org.checkerframework.checker.index.IndexMethodIdentifier;
 import org.checkerframework.checker.index.lowerbound.LowerBoundAnnotatedTypeFactory;
 import org.checkerframework.checker.index.lowerbound.LowerBoundChecker;
-import org.checkerframework.checker.index.minlen.MinLenAnnotatedTypeFactory;
-import org.checkerframework.checker.index.minlen.MinLenChecker;
+import org.checkerframework.checker.index.minlen2.MinLen2AnnotatedTypeFactory;
+import org.checkerframework.checker.index.minlen2.MinLen2Checker;
 import org.checkerframework.checker.index.qual.IndexFor;
 import org.checkerframework.checker.index.qual.IndexOrHigh;
 import org.checkerframework.checker.index.qual.IndexOrLow;
@@ -120,8 +120,8 @@ public class UpperBoundAnnotatedTypeFactory extends BaseAnnotatedTypeFactory {
      * Provides a way to query the Min Len (minimum length) Checker, which computes the lengths of
      * arrays.
      */
-    MinLenAnnotatedTypeFactory getMinLenAnnotatedTypeFactory() {
-        return getTypeFactoryOfSubchecker(MinLenChecker.class);
+    MinLen2AnnotatedTypeFactory getMinLenAnnotatedTypeFactory() {
+        return getTypeFactoryOfSubchecker(MinLen2Checker.class);
     }
 
     /**
